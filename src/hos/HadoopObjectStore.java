@@ -41,6 +41,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 	public HbaseUtil hbaseUtil = new HbaseUtil();
 	public static String message;
 	public static BucketACL permCheck = new BucketACL();
+	public static ObjectACL objpermCheck = new ObjectACL();
 	private static HadoopObjectStore defaultObjectStore = null;
 	public static HadoopObjectStore getHadoopObjectStore(){
 		if ( defaultObjectStore == null){
@@ -288,7 +289,13 @@ public class HadoopObjectStore implements ObjectProtocol {
 //				fsOut.writeBytes("\n");
 //			}
 			fsOut.close();
-			
+
+			List<AclEntry> newaclList = new ArrayList<AclEntry>();
+			if(isSmallFile(objectData.lenofFile))
+				newaclList.add(AclEntry.parseAclEntry("user:"+binfo.getQueryUser().getId()+","+fileName+":"+"rwx",true));
+			else
+				newaclList.add(AclEntry.parseAclEntry("user:"+binfo.getQueryUser().getId()+":"+"rwx",true));
+		    fs.modifyAclEntries(p,newaclList);
 			responseMessage += "success";
 			addEntriesForPutObject(binfo, objectData);
 		} catch (Exception e){
@@ -314,6 +321,11 @@ public class HadoopObjectStore implements ObjectProtocol {
 		if(!Checks.bucketExists(binfo)) return ("Failed. Bucket does not exist");
 		if(objectKey == null || objectKey.id == null || objectKey.id == "")
 			return "Failed. Please select proper objectKey";
+
+		FsAction fa = objpermCheck.checkPermission(binfo , objectKey);
+		if(fa != FsAction.READ_WRITE && fa != FsAction.ALL)
+			return "No sufficient permissions to delete object";
+		
 		FileSystem fs = util.getFileSystem();
 		Result r = HbaseUtil.getResult(DBStrings.Table_objectsTableString, binfo.getQueryUser().getId() + "," + binfo.getBucketName() + "," + objectKey.id);
 		if (!r.isEmpty()){
@@ -385,6 +397,14 @@ public class HadoopObjectStore implements ObjectProtocol {
 			m.append("Failed. Select proper objectkey");
 			return null;
 		}
+
+		FsAction fa = objpermCheck.checkPermission(binfo , objectKey);
+		if(fa != FsAction.READ_WRITE && fa != FsAction.ALL && fa != FsAction.READ)
+		{
+			m.append("You do not have sufficient permissions to read the object");
+			return null;
+		}
+		
   		// get File path and its name
 		ObjectInfoMetaData oimd = RestUtil.getObjectFromParams(binfo, objectKey.id); 
 	  	ObjectInfo obj = oimd.objectInfo;

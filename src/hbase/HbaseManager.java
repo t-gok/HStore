@@ -28,6 +28,9 @@ public class HbaseManager {
 	public HTableDescriptor smallFilesDeleteTable;
 	public HTableDescriptor harFilesTable;
 	public HTableDescriptor objectsTable;
+	public HTableDescriptor userInfoTable;
+	public HTableDescriptor bucketOwnersTable;
+	public HTableDescriptor objectOwnersTable;
 	
 	public HbaseManager(){
 		conf = HBaseConfiguration.create();
@@ -61,6 +64,14 @@ public class HbaseManager {
 		objectsTable = new HTableDescriptor(TableName.valueOf(DBStrings.Table_objectsTableString));
 		objectsTable.addFamily(defaultFam);
 		
+		userInfoTable = new HTableDescriptor(TableName.valueOf(DBStrings.Table_userInfo));
+		userInfoTable.addFamily(defaultFam);
+		
+		bucketOwnersTable = new HTableDescriptor(TableName.valueOf(DBStrings.Table_bucketOwners));
+		bucketOwnersTable.addFamily(defaultFam);
+		
+		objectOwnersTable = new HTableDescriptor(TableName.valueOf(DBStrings.Table_objectOwners));
+		objectOwnersTable.addFamily(defaultFam);
 	}
 	
 	public void CheckandCreateInternalTables(){
@@ -77,6 +88,15 @@ public class HbaseManager {
 			}
 			if(!admin.tableExists(objectsTable.getTableName())){
 				CreateTable(objectsTable);
+			}
+			if(!admin.tableExists(userInfoTable.getTableName())){
+				CreateTable(userInfoTable);
+			}
+			if(!admin.tableExists(bucketOwnersTable.getTableName())){
+				CreateTable(bucketOwnersTable);
+			}
+			if(!admin.tableExists(objectOwnersTable.getTableName())){
+				CreateTable(objectOwnersTable);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

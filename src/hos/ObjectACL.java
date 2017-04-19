@@ -80,9 +80,9 @@ public class ObjectACL {
 		ObjectInfoMetaData oimd = RestUtil.getObjectFromParams(binfo, objectKey.id); 
 	  	ObjectInfo obj = oimd.objectInfo;
 	  	String objPath = obj.path;
-	  	Path p = new Path("none");
+	  	Path p = null;
 	  	if (objPath.startsWith("har:")){
-	  		// the file is in a har file
+	  		// the object is in a har file
 	  		try{
 	  		FileSystem fs = util.getFileSystem();
 			p = new Path(new URI(objPath));
@@ -124,7 +124,7 @@ public class ObjectACL {
 		String m = "";
 		m = Checks.checkBucketInfo(binfo);
 		if(!m.equals(""))
-			return null;
+			return m;
 		if(!Checks.bucketExists(binfo))
 		{
 			m = "Bucket does not exist";
@@ -140,8 +140,6 @@ public class ObjectACL {
 		if(permission != FsAction.ALL)
 			return "You do not have permission to get acl for this object"; 
 		String answer = listObjectACL(binfo,objectKey);
-		if(!answer.contains(","))
-			return "User specific role is not present";
 		for(String each : answer.split(","))
 		{
 			String temp[] = each.split(":");
@@ -159,7 +157,7 @@ public class ObjectACL {
 		ObjectInfoMetaData oimd = RestUtil.getObjectFromParams(binfo, objectKey.id);
 	  	ObjectInfo obj = oimd.objectInfo;
 	  	String objPath = obj.path;
-	  	Path p = new Path("none");
+	  	Path p = null;
 	  	try{
 		  	if (objPath.startsWith("har:")){
 		  		// the file is in a har file
@@ -229,6 +227,9 @@ public class ObjectACL {
 					//FileContext fileContext = FileContext.getFileContext();
 					//AclStatus aclStatus = fs.getAclStatus(path);
 				}
+//				for(AclEntry temp : oldaclList)
+//					if(temp.getName() in newaclList))
+//				fs.setAcl(path, newaclList);
 				fs.modifyAclEntries(path,newaclList);
 				return true;
 		  	}
@@ -323,8 +324,7 @@ public class ObjectACL {
 				List<AclEntry> newaclList = new ArrayList<AclEntry>();
 				for(AclEntry acl : oldaclList)
 				{
-					int indexOfcomma = acl.getName().indexOf(',');
-					if(users.contains(acl.getName().substring(0,indexOfcomma)))
+					if(users.contains(acl.getName().split(",")[0]))
 						newaclList.add(acl);
 				}
 				fs.removeAclEntries(path,newaclList);
@@ -413,20 +413,6 @@ public class ObjectACL {
 	
 	public String listObjectACL(BucketInfo binfo,ObjectId objectKey)
 	{
-		String m = "";
-		m = Checks.checkBucketInfo(binfo);
-		if(!m.equals(""))
-			return null;
-		if(!Checks.bucketExists(binfo))
-		{
-			m = "Bucket does not exist";
-			return m;
-		}
-		if(objectKey == null || objectKey.id == null || objectKey.id == "")
-		{
-			m = "Failed. Select proper objectkey";
-			return m;
-		}
 		FsAction permission = checkPermission(binfo,objectKey);
 		if(permission != FsAction.ALL)
 			return "You do not have permission to change acl's for this object";
@@ -436,7 +422,7 @@ public class ObjectACL {
 		StringBuilder message = new StringBuilder("");
 		for(AclEntry temp : aclList)
 			if(!temp.getName().isEmpty())
-				message.append(temp.getName() + ":" + getRole(temp.getPermission()) + ",");
+				message.append(temp.getName().split(",")[0] + ":" + getRole(temp.getPermission()) + ",");
 		return message.toString();
 	}
 }

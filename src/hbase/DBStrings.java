@@ -11,6 +11,13 @@ public final class DBStrings {
 	//Table1
 	public final static String Table_bucketsTableString = "bucketstable";
 	//KeyCol - userid,bucketid
+	
+	public final static String Table_userInfo = "usertable";
+	
+	public final static String Table_bucketOwners = "bucketownerstable";
+	
+	public final static String Table_objectOwners = "objectownerstable";
+	
 	public final static String KeyCol_bucketksList = "USERSBUCKET";
 	//Col - userid
 	public final static String Col_bucketID = "BUCKETID";

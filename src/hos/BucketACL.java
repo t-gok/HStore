@@ -1,49 +1,20 @@
 package hos;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import hbs.HbsUtil;
+
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import javax.servlet.ServletInputStream;
-
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.HarFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AclEntry;
 import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsAction;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.ipc.ProtocolSignature;
-import org.apache.hadoop.fs.permission.AclEntry;
 
-import hbs.HbsUtil;
 
-import restCalls.RestUtil;
-
-import hbase.DBStrings;
-import hbase.HbaseManager;
-import hbase.HbaseUtil;
-
-import hos.Checks;
 public class BucketACL {
 	public static HbsUtil util = new HbsUtil();	
 	
@@ -84,7 +55,7 @@ public class BucketACL {
 			AclStatus aclStatus = fs.getAclStatus(path);
 			List< AclEntry > aclList = aclStatus.getEntries();
 			for(AclEntry temp : aclList) {
-				if( binfo.getQueryUser().getId().equals(temp.getName()))
+				if(binfo.getQueryUser().getId().equals(temp.getName()))
 					return temp.getPermission();
 			}
 		} catch (IOException e) {
