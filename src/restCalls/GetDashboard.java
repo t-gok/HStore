@@ -23,7 +23,7 @@ import hos.HadoopObjectStore;
 import hos.ObjectProtocol;
 import hos.UserId;
 
-public class ListBuckets extends HttpServlet{
+public class GetDashboard extends HttpServlet{
 
 	  HbsUtil util = new HbsUtil();
 	
@@ -31,7 +31,7 @@ public class ListBuckets extends HttpServlet{
       throws ServletException, IOException {
 
 		  String userName = (String) request.getParameter("userName");
-		  ArrayList<String> bucketList = (ArrayList<String>) HadoopObjectStore.getHadoopObjectStore().ListBuckets(new UserId(userName));
+		  ArrayList<String> bucketList = (ArrayList<String>) HadoopObjectStore.getHadoopObjectStore().GetDashboard(new UserId(userName));
 		  JSONObject resp = new JSONObject();
 		  JSONArray bucketValues = new JSONArray();
 		  for (int i=0; i<bucketList.size(); i++){

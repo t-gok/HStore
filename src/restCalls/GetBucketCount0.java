@@ -27,7 +27,7 @@ import hos.UserId;
 public class GetObject extends HttpServlet{
 
 	  HbsUtil util = new HbsUtil();
-		
+
 	  public void doGet(HttpServletRequest request, HttpServletResponse response)
 			  throws ServletException, IOException {
 		  	String bucketKey = (String) request.getParameter("bucketKey");
@@ -38,7 +38,7 @@ public class GetObject extends HttpServlet{
 	  		if(objOutput == null)
 	  		{
 				try{
-					response.getWriter().write(message.toString());				
+					response.getWriter().write(message.toString());
 				} catch (Exception e){
 					e.printStackTrace();
 				}
@@ -46,11 +46,11 @@ public class GetObject extends HttpServlet{
 	  		}
 	  		ObjectInfo objInfo = objOutput.objectInfo;
 	  		DataInputStream din = objOutput.dis;
-	  		
+
 			response.setContentLength(objInfo.lenofFile);
-		  	
+
 		  	if (objInfo.contentType!=""){
-			  	response.setContentType(objInfo.contentType);		  		
+			  	response.setContentType(objInfo.contentType);
 		  	}
 		  	if (objInfo.characterEnconding!=""){
 		  		response.setCharacterEncoding(objInfo.characterEnconding);
@@ -68,6 +68,6 @@ public class GetObject extends HttpServlet{
 
 			sos.close();
 			din.close();
-			
+
 	  }
 }

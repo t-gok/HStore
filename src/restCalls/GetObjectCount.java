@@ -20,41 +20,46 @@ import hos.HadoopObjectStore;
 import hos.ObjectId;
 import hos.UserId;
 
-public class ListObjectsInBucket extends HttpServlet{
+public class GetObjectCount extends HttpServlet{
 
 	  HbsUtil util = new HbsUtil();
-	
+
 	  public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-	  	String bucketKey = (String) request.getParameter("bucketKey");
 	  	String userName = (String) request.getParameter("userName");
-	  	UserId userId = new UserId(userName); 
-		  System.out.println(" starting getObjectList");
-		  System.out.println(" starting getObjectList");
-		  System.out.println(" starting getObjectList");
-	  	List<String> bucketList =    HadoopObjectStore.getHadoopObjectStore().ListObjects(new BucketInfo(new UserId(userName),bucketKey));
+	  	UserId userId = new UserId(userName);
+			ArrayList<String> bucketList = (ArrayList<String>) HadoopObjectStore.getHadoopObjectStore().ListBuckets(new UserId(userName));
+			int objectCount = 0;
+			int totalSize = 0;
+			for(int i=0; i<bucketList.size(); i++)
+			{
+				String bucketKey = bucketList[i];
+				List<String> objectList =  HadoopObjectStore.getHadoopObjectStore().ListObjects(new BucketInfo(new UserId(userName),bucketKey));
+				objectCount += objectList.size();
+				for (int j=0; j<objectList.size(); j++)
+				{
+						totalSize += objectList[j].lenofFile;
+				}
+			}
 	  	String message;
 	  	if(bucketList == null){
 	  		message = "Failed. Check UserName and BucketKey";
 	  		try{
-				response.getWriter().write(message.toString());				
+				response.getWriter().write(message.toString());
 			} catch (Exception e){
 				e.printStackTrace();
 			}
 			return;
 	  	}
 	  	JSONObject resp = new JSONObject();
-	  	JSONArray bucketValues = new JSONArray();
-		 for (int i=0; i<bucketList.size(); i++){
-			  JSONObject bucket = new JSONObject();
-			  bucket.put(String.valueOf(i+1), bucketList.get(i));
-			  bucketValues.add(bucket);
-		  }
-		  resp.put("objectList", bucketValues);
-		  response.setContentType("application/json");
-		  response.getWriter().write(resp.toString());;
+			resp.put("objectCount", objectCount);
+			resp.put("totalSize", totalSize);
 
-	
+			//FileSystem fs = util.getFileSystem();
+
+			response.setContentType("application/json");
+			response.getWriter().write(resp.toString());
+
 	}
-	
+
 }
