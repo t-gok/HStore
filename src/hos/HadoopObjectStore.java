@@ -54,7 +54,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 		hbaseManager = new HbaseManager();
 //		executor.scheduleAtFixedRate(BackGroundTasks.getBackGroundTasks(), 3, 3, TimeUnit.SECONDS);
 	}
-	
+
 	@Override
 	public long getProtocolVersion(String protocol, long clientVersion) throws IOException {
 		// TODO Auto-generated method stub
@@ -81,9 +81,9 @@ public class HadoopObjectStore implements ObjectProtocol {
 
 		 String colFam = DBStrings.DEFAULT_COLUMN_FAMILY;
 		 String col1 = DBStrings.Col_bucketID;
-		 
+
 		 if (res == null) return ret;
-		 
+
 		 for (int i=0; i<res.size(); i++){
 			 Result curr = res.get(i);
 			 String rowKey = Bytes.toString(curr.getRow());
@@ -115,7 +115,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Override
 	public String PutBucket(BucketInfo bucketID) {
 		message = Checks.checkBucketInfo(bucketID);
@@ -166,12 +166,12 @@ public class HadoopObjectStore implements ObjectProtocol {
 	 * TODO - check for small files in the bucket
 	 * 	The deletebucketInFolder raises exception if there are files in it.
 	 * 	since fs.delete(_, false) is called.
-	 *  
+	 *
 	 * 	If the files are smallFiles, they will be stored in the smallFiles folder.
 	 *  So, even if the folder is empty, the bucket may not be. Check in DB for this.
-	 *  HbaseUtil has scanWithPrefix. Use it to fix this.  
+	 *  HbaseUtil has scanWithPrefix. Use it to fix this.
 	 * */
-	
+
 		boolean success = true, noSuchBucket = true , bucketNotEmpty = false;
 		FileSystem fs = util.getFileSystem();
 		Path p = new Path(util.genDefaultUserPath(binfo));
@@ -179,7 +179,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 			if (fs.exists(p)){
 				noSuchBucket = false;
 				try{
-					fs.delete(p, false); 						
+					fs.delete(p, false);
 					success = true;
 				} catch (Exception e){
 					bucketNotEmpty = true;
@@ -190,7 +190,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 			e.printStackTrace();
 			success = false;
 		}
-		  
+
 	  	if (success){
 	  		message += "Success";
 	  		deleteEntriesForDeleteBucket(binfo);
@@ -223,7 +223,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 
 	@Override
 	public String PutObject(BucketInfo binfo, ObjectInfo objectData, ServletInputStream reader) {
-		
+
 		String message = Checks.checkBucketInfo(binfo);
 		if(message != "") return message;
 		if(!Checks.bucketExists(binfo)) return "Failed. Bucket does not exist";
@@ -235,16 +235,16 @@ public class HadoopObjectStore implements ObjectProtocol {
 		FsAction fa = permCheck.checkPermission(binfo);
 		if(fa != FsAction.READ_WRITE && fa != FsAction.ALL)
 			return "No sufficient permissions to write to bucket";
-		
+
 		FileSystem fs = util.getFileSystem();
 		String responseMessage = "";
 		String fileName =  objectData.fileName;
 		String path = getNewFilePath(binfo, fileName, isSmallFile(objectData.lenofFile));
-		
+
 		responseMessage += " len: " + objectData.lenofFile + " ";
-		
+
 		// For small files only: check for previous record and if it exists - add the previous entry to deleteTable
-		
+
 		Result r = HbaseUtil.getResult(DBStrings.Table_objectsTableString, binfo.getQueryUser().getId() + "," + binfo.getBucketName() + "," + objectData.fileName);
 		if (!r.isEmpty()){
 			String sizeOfFile = Bytes.toString(r.getValue(Bytes.toBytes(DBStrings.DEFAULT_COLUMN_FAMILY), Bytes.toBytes(DBStrings.Col_fileSize)));
@@ -253,7 +253,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 				// add entry to small files delete table
 				int indexOfSlash = cPath.lastIndexOf('/');
 				String corrHDFSPath = "/hos/smallFiles" + cPath.substring(indexOfSlash);
-				
+
 				hbaseManager.AddRowinTable(hbaseManager.smallFilesDeleteTable, corrHDFSPath, new String[]{"1"}, new String[]{cPath});
 			}
 			else{
@@ -265,24 +265,24 @@ public class HadoopObjectStore implements ObjectProtocol {
 				}
 			}
 		}
-		
-		
-		try{				
-			
+
+
+		try{
+
 			Path p = new Path(path);
 			objectData.path = path;
-			
+
 			if (fs.exists(p)){
 				fs.delete(p, false);
 			}
-			
+
 			FSDataOutputStream fsOut = fs.create(p);
 			byte[] buffer = new byte[10240];
 			for (int length = 0; (length = reader.read(buffer)) > 0;) {
 	    			fsOut.write(buffer, 0, length);
     			}
 			reader.close();
-			
+
 //			String line = null;
 //			while((line=reader.readLine())!=null){
 //				fsOut.writeBytes(line);
@@ -301,16 +301,16 @@ public class HadoopObjectStore implements ObjectProtocol {
 		} catch (Exception e){
 			responseMessage += ExceptionUtils.getStackTrace(e);
 		}
-		
+
 		responseMessage = responseMessage + "path : "  + path + "\n";
 		responseMessage = responseMessage + "name : "  + fileName + "\n";
 		responseMessage = responseMessage + "encoding : "  + objectData.characterEnconding+ "\n";
 		responseMessage = responseMessage + "contentType : "  + objectData.contentType+ "\n";
-		
+
 		// file upload is done
-		
-		
-		
+
+
+
 		return responseMessage;
 	}
 
@@ -325,7 +325,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 		FsAction fa = objpermCheck.checkPermission(binfo , objectKey);
 		if(fa != FsAction.READ_WRITE && fa != FsAction.ALL)
 			return "No sufficient permissions to delete object";
-		
+
 		FileSystem fs = util.getFileSystem();
 		Result r = HbaseUtil.getResult(DBStrings.Table_objectsTableString, binfo.getQueryUser().getId() + "," + binfo.getBucketName() + "," + objectKey.id);
 		if (!r.isEmpty()){
@@ -336,7 +336,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 				int indexOfSlash = cPath.lastIndexOf('/');
 				String corrHDFSPath = "/hos/smallFiles" + cPath.substring(indexOfSlash);
 				hbaseManager.AddRowinTable(hbaseManager.smallFilesDeleteTable, corrHDFSPath, new String[]{"1"}, new String[]{cPath});
-				
+
 				if (cPath.startsWith("har:")){
 					String harPath = cPath.substring(0, indexOfSlash);
 					int indexOfHarSlash = harPath.lastIndexOf('/');
@@ -350,15 +350,15 @@ public class HadoopObjectStore implements ObjectProtocol {
 					else{
 						String usedSpace = Bytes.toString(r2.getValue(Bytes.toBytes(DBStrings.DEFAULT_COLUMN_FAMILY), Bytes.toBytes(DBStrings.Col_validSpace)));
 						String diskSpace = Bytes.toString(r2.getValue(Bytes.toBytes(DBStrings.DEFAULT_COLUMN_FAMILY), Bytes.toBytes(DBStrings.Col_SpaceOnDisk)));
-						
+
 						long us= Long.parseLong(usedSpace);
-						
+
 						us -= Long.parseLong(sizeOfFile);
 						usedSpace = String.valueOf(us);
-						
+
 						hbaseManager.AddRowinTable(hbaseManager.harFilesTable, harHDFS,
 								new String[]{DBStrings.Col_validSpace, DBStrings.Col_SpaceOnDisk}, new String[]{usedSpace, diskSpace});
-						
+
 					}
 				}
 			}
@@ -369,7 +369,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 					e.printStackTrace();
 				}
 			}
-			
+
 			// delete entry from DB
 		  	boolean part2Succ = deleteEntriesFromTable(binfo, objectKey.id);
 		  	return (part2Succ ? ("Success") : ("Failed. Object not deleted from table"));
@@ -377,7 +377,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 		else{
 			return "Failed. Object does not exist";
 		}
-		
+
 	}
 
 	@Override
@@ -404,21 +404,21 @@ public class HadoopObjectStore implements ObjectProtocol {
 			m.append("You do not have sufficient permissions to read the object");
 			return null;
 		}
-		
+
   		// get File path and its name
-		ObjectInfoMetaData oimd = RestUtil.getObjectFromParams(binfo, objectKey.id); 
+		ObjectInfoMetaData oimd = RestUtil.getObjectFromParams(binfo, objectKey.id);
 	  	ObjectInfo obj = oimd.objectInfo;
 	  	String fileName  = obj.fileName;
-	  	
+
 	  	FSDataInputStream fsin  = null;
-	  	
+
 	  	String objPath = obj.path;
 	  	Path p = new Path("none");
 	  	if (objPath.startsWith("har:")){
 	  		// the file is in a har file
 	  		int lastIndex = objPath.lastIndexOf('/');
 	  		String harPath = objPath.substring(0, lastIndex);
-	  		
+
 	  		try {
 				p = new Path(new URI(objPath));
 			} catch (URISyntaxException e) {
@@ -427,7 +427,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 		  	HarFileSystem hfs = util.getHarFileSystem();
 		  	try {
 				hfs.initialize(new URI(harPath),util.getConfiguration());
-			  	fsin = hfs.open(new Path(objPath)); 
+			  	fsin = hfs.open(new Path(objPath));
 		  	} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -435,29 +435,29 @@ public class HadoopObjectStore implements ObjectProtocol {
 	  	else{
 	  		p = new Path(objPath);
 		  	FileSystem fs = util.getFileSystem();
-		  	
+
 		  	try {
 				fsin =fs.open(p);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 	  	}
-	  	
-	  	
+
+
 		DataInputStream din = new DataInputStream(fsin);
-	  	
+
 	  	return (new ObjectOut(obj, din, oimd.metaData));
 	}
 
-	
-	
+
+
 	/*
-	 * the above uses below 
+	 * the above uses below
 	 * */
-	
+
 	  private ArrayList<String> getObjectList(String DBPrefix){
-		  
-		  // get entries with RestUtil.USER_NAME_bucketKey in objectsTable and return 
+
+		  // get entries with RestUtil.USER_NAME_bucketKey in objectsTable and return
 
 		  System.out.println(" starting getObjectList");
 		  ArrayList<Result> result = hbaseUtil.getResultsForPrefix(DBStrings.Table_objectsTableString, DBPrefix);
@@ -471,7 +471,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 		  return ret;
 	  }
 
-	
+
 	private String getNewFilePath(BucketInfo binfo, String oKey, boolean isSmall){
 		String prefix = "/hos/";
 		String suffix = "_" + HbaseUtil.getJuilianTimeStamp();
@@ -480,7 +480,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 		}
 		return prefix +  binfo.getBucketName() + "/" + oKey + suffix ;
 	}
-	
+
 	private boolean isSmallFile(int n){
 		long frac = ((long)n*100)/ObjectProtocol.HADOOP_BLOCK_SIZE;
 		if (frac<50){
@@ -488,7 +488,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 		}
 		return false;
 	}
-	
+
 	private boolean addEntriesForPutObject(BucketInfo binfo, ObjectInfo o){
 		// add into objectsTable
 		String rowKey = binfo.getQueryUser().getId() + "," + binfo.getBucketName() + "," + o.fileName;
@@ -506,32 +506,32 @@ public class HadoopObjectStore implements ObjectProtocol {
 			    sb.append(entry.getKey() + ":" + entry.getValue()[0] + "\n");
 		}
 
-		
+
 		String colValues[] = new String[DBStrings.num_metadata];
-		colValues[0] = o.path; 
+		colValues[0] = o.path;
 		colValues[1] = o.characterEnconding;
 		colValues[2] = o.contentType;
 		colValues[3] = String.valueOf(o.lenofFile);
 		colValues[4] = sb.toString();
 		colValues[5] = o.fileName;
 		colValues[6] = String.valueOf(System.currentTimeMillis());
-		
+
 		for (int i=0; i<DBStrings.num_metadata; i++){
 			if (colValues[i] == null) colValues[i] = "";
 		}
-		
+
 		hbaseManager.AddRowinTable(hbaseManager.objectsTable, rowKey, colNames, colValues);
 		return true;
 	}
 
-	
-	
+
+
 	private boolean deleteEntriesFromTable(BucketInfo binfo, String objectKey){
 		String rowKey = binfo.getQueryUser().getId() + "," + binfo.getBucketName() + "," + objectKey;
 		hbaseManager.DeleteRowinTable(hbaseManager.objectsTable, rowKey);
 		return true;
 	}
-  
+
 	private boolean deleteObjectInBucket(String objPath){
 	  	if (objPath.startsWith("har:")){
 	  		return true;
@@ -547,7 +547,7 @@ public class HadoopObjectStore implements ObjectProtocol {
 	  		return false;
 	  	}
 	}
-	
+
 	public boolean createBucketInFolder(BucketInfo binfo){
 		  folderAlreadyExists = false;
 		  FileSystem fs = util.getFileSystem();
@@ -566,15 +566,15 @@ public class HadoopObjectStore implements ObjectProtocol {
 			  return false;
 		  }
 	  }
-	  
+
 	  public void addEntriesToUserBuckets(BucketInfo bucketKey){
-		  
-		  hbaseManager.AddRowinTable(hbaseManager.bucketsTable, bucketKey.getQueryUser().getId() + "," + bucketKey.getBucketName(), 
+
+		  hbaseManager.AddRowinTable(hbaseManager.bucketsTable, bucketKey.getQueryUser().getId() + "," + bucketKey.getBucketName(),
 				  new String[]{DBStrings.Col_bucketID} , new String[]{bucketKey.getBucketName()});
 	  }
 
 	  private void deleteEntriesForDeleteBucket(BucketInfo binfo){
 		  hbaseManager.DeleteRowinTable(hbaseManager.bucketsTable, binfo.getQueryUser().getId() + "," + binfo.getBucketName());
 	  }
-	
+
 }

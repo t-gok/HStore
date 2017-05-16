@@ -36,10 +36,12 @@ public class GetObjectCount extends HttpServlet{
 				String bucketKey = bucketList.get(i);
 				List<String> objectList =  HadoopObjectStore.getHadoopObjectStore().ListObjects(new BucketInfo(new UserId(userName),bucketKey));
 				objectCount += objectList.size();
-//				for (int j=0; j<objectList.size(); j++)
-//				{
-//						totalSize += objectList.get(j).lenofFile;
-//				}
+				for (int j=0; j<objectList.size(); j++)
+				{
+						Result r = HbaseUtil.getResult(DBStrings.Table_objectsTableString, userName + "," + bucketKey + "," + objectList[j]);
+						String sizeOfFile = Bytes.toString(r.getValue(Bytes.toBytes(DBStrings.DEFAULT_COLUMN_FAMILY), Bytes.toBytes(DBStrings.Col_fileSize)));
+						totalSize += Integer.parseInt(sizeOfFile);
+				}
 			}
 	  	String message;
 	  	if(bucketList == null){
