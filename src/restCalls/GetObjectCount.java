@@ -33,13 +33,13 @@ public class GetObjectCount extends HttpServlet{
 			int totalSize = 0;
 			for(int i=0; i<bucketList.size(); i++)
 			{
-				String bucketKey = bucketList[i];
+				String bucketKey = bucketList.get(i);
 				List<String> objectList =  HadoopObjectStore.getHadoopObjectStore().ListObjects(new BucketInfo(new UserId(userName),bucketKey));
 				objectCount += objectList.size();
-				for (int j=0; j<objectList.size(); j++)
-				{
-						totalSize += objectList[j].lenofFile;
-				}
+//				for (int j=0; j<objectList.size(); j++)
+//				{
+//						totalSize += objectList.get(j).lenofFile;
+//				}
 			}
 	  	String message;
 	  	if(bucketList == null){
