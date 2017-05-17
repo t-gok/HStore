@@ -322,9 +322,9 @@ public class HadoopObjectStore implements ObjectProtocol {
 		if(objectKey == null || objectKey.id == null || objectKey.id == "")
 			return "Failed. Please select proper objectKey";
 
-		FsAction fa = objpermCheck.checkPermission(binfo , objectKey);
-		if(fa != FsAction.READ_WRITE && fa != FsAction.ALL)
-			return "No sufficient permissions to delete object";
+//		FsAction fa = objpermCheck.checkPermission(binfo , objectKey);
+//		if(fa != FsAction.READ_WRITE && fa != FsAction.ALL)
+//			return "No sufficient permissions to delete object";
 		
 		FileSystem fs = util.getFileSystem();
 		Result r = HbaseUtil.getResult(DBStrings.Table_objectsTableString, binfo.getQueryUser().getId() + "," + binfo.getBucketName() + "," + objectKey.id);
@@ -398,12 +398,12 @@ public class HadoopObjectStore implements ObjectProtocol {
 			return null;
 		}
 
-		FsAction fa = objpermCheck.checkPermission(binfo , objectKey);
-		if(fa != FsAction.READ_WRITE && fa != FsAction.ALL && fa != FsAction.READ)
-		{
-			m.append("You do not have sufficient permissions to read the object");
-			return null;
-		}
+//		FsAction fa = objpermCheck.checkPermission(binfo , objectKey);
+//		if(fa != FsAction.READ_WRITE && fa != FsAction.ALL && fa != FsAction.READ)
+//		{
+//			m.append("You do not have sufficient permissions to read the object");
+//			return null;
+//		}
 		
   		// get File path and its name
 		ObjectInfoMetaData oimd = RestUtil.getObjectFromParams(binfo, objectKey.id); 
